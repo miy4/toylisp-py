@@ -1,0 +1,31 @@
+[project]
+name = "toylisp-py"
+version = "0.1.0"
+description = 'A simple Lisp interpreter inspired by "How to Write a (Lisp) Interpreter (in Python)" by Peter Norvig'
+authors = [{ name = "miy4", email = "miy4@users.noreply.github.com" }]
+dependencies = []
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = ["pytest>=7.4.4"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+line-length = 80
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["EXE", "T20", "E501", "D203", "D212", "ANN101", "S311"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
