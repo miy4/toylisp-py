@@ -25,3 +25,21 @@ def test_evaluate_define_constant():
     expected = 10
     assert evaluate(parse("(define a 10)")) is None
     assert expected == global_env["a"]
+
+
+def test_evaluate_math_func_call():
+    expected = 1.0
+    assert expected == evaluate(parse("(cos 0)"))
+
+
+def test_evaluate_procedure_call():
+    expected = 3
+    assert expected == evaluate(parse("(+ 1 2)"))
+
+    expected = 314.1592653589793
+    assert expected == evaluate(parse("(begin (define r 10) (* pi (* r r)))"))
+
+    expected = [2, 4, 6, 8]
+    assert expected == evaluate(
+        parse("(list (+ 1 1) (+ 2 2) (* 2 3) (expt 2 3))"),
+    )

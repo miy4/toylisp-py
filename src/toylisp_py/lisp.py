@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import math
+import operator as op
+
 """A Scheme Symbol is implemented as a Python str."""
 Symbol = str
 """A Scheme Number is implemented as a Python int or float."""
@@ -20,7 +23,45 @@ DEFINE = "define"
 
 def standard_env() -> Env:
     """Return an environment with some Scheme standard procedures."""
-    return Env()
+    env = Env()
+    env.update(vars(math))  # sin, cos, sqrt, pi, ...
+    env.update(
+        {
+            "+": op.add,
+            "-": op.sub,
+            "*": op.mul,
+            "/": op.truediv,
+            ">": op.gt,
+            "<": op.lt,
+            ">=": op.ge,
+            "<=": op.le,
+            "=": op.eq,
+            "abs": abs,
+            "append": op.add,
+            "apply": lambda proc, args: proc(*args),
+            "begin": lambda *x: x[-1],
+            "car": lambda x: x[0],
+            "cdr": lambda x: x[1:],
+            "cons": lambda x, y: [x, *y],
+            "eq?": op.is_,
+            "expt": pow,
+            "equal?": op.eq,
+            "length": len,
+            "list": lambda *x: List(x),
+            "list?": lambda x: isinstance(x, List),
+            "map": map,
+            "max": max,
+            "min": min,
+            "not": op.not_,
+            "null?": lambda x: x == [],
+            "number?": lambda x: isinstance(x, Number),
+            "print": print,
+            "procedure?": callable,
+            "round": round,
+            "symbol?": lambda x: isinstance(x, Symbol),
+        },
+    )
+    return env
 
 
 global_env = standard_env()
@@ -70,6 +111,8 @@ def parse(program: str) -> Exp:
 
 def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
     """Evaluate an expression in an environment."""
+    if isinstance(expr, Symbol):  # variable reference
+        return env[expr]
     if isinstance(expr, Number):
         return expr
     if expr[0] == DEFINE:
@@ -77,5 +120,6 @@ def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
         env[symbol] = evaluate(args, env)
         return None
 
-    msg = f"Unknown expression: {expr}"
-    raise ValueError(msg)
+    proc = evaluate(expr[0], env)  # procedure call
+    args = [evaluate(arg, env) for arg in expr[1:]]
+    return proc(*args)
