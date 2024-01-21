@@ -11,6 +11,9 @@ requires-python = ">= 3.8"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[project.scripts]
+repl = "toylisp_py:main"
+
 [tool.rye]
 managed = true
 dev-dependencies = ["pytest>=7.4.4"]
