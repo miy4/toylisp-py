@@ -15,6 +15,15 @@ Env = dict
 
 LPAREN = "("
 RPAREN = ")"
+DEFINE = "define"
+
+
+def standard_env() -> Env:
+    """Return an environment with some Scheme standard procedures."""
+    return Env()
+
+
+global_env = standard_env()
 
 
 def tokenize(chars: str) -> list[str]:
@@ -59,9 +68,14 @@ def parse(program: str) -> Exp:
     return read_from_tokens(tokenize(program))
 
 
-def evaluate(expr: Exp) -> Exp:
+def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
     """Evaluate an expression in an environment."""
     if isinstance(expr, Number):
         return expr
+    if expr[0] == DEFINE:
+        (_, symbol, args) = expr
+        env[symbol] = evaluate(args, env)
+        return None
+
     msg = f"Unknown expression: {expr}"
     raise ValueError(msg)

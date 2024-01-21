@@ -1,5 +1,6 @@
 from .lisp import (
     evaluate,
+    global_env,
     parse,
     tokenize,
 )
@@ -18,3 +19,9 @@ def test_parse():
 def test_evaluate_atom():
     expected = 1
     assert expected == evaluate(parse("1"))
+
+
+def test_evaluate_define_constant():
+    expected = 10
+    assert evaluate(parse("(define a 10)")) is None
+    assert expected == global_env["a"]
