@@ -128,3 +128,18 @@ def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
     proc = evaluate(expr[0], env)  # procedure call
     args = [evaluate(arg, env) for arg in expr[1:]]
     return proc(*args)
+
+
+def schemestr(expr: Exp) -> str:
+    """Convert a Python object back into a Scheme-readable string."""
+    if isinstance(expr, List):
+        return "(" + " ".join(map(schemestr, expr)) + ")"
+    return str(expr)
+
+
+def repl(prompt: str = "lis.py> "):
+    """Execute a prompt-read-eval-print loop."""
+    while True:
+        val = evaluate(parse(input(prompt)))
+        if val is not None:
+            print(schemestr(val))
