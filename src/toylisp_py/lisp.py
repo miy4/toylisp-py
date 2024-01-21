@@ -19,6 +19,7 @@ Env = dict
 LPAREN = "("
 RPAREN = ")"
 DEFINE = "define"
+IF_COND = "if"
 
 
 def standard_env() -> Env:
@@ -115,6 +116,10 @@ def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
         return env[expr]
     if isinstance(expr, Number):
         return expr
+    if expr[0] == IF_COND:
+        (_, test, conseq, alt) = expr
+        e = conseq if evaluate(test, env) else alt
+        return evaluate(e, env)
     if expr[0] == DEFINE:
         (_, symbol, args) = expr
         env[symbol] = evaluate(args, env)
