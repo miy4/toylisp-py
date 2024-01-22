@@ -48,3 +48,10 @@ def test_evaluate_procedure_call():
 def test_evaluate_conditional():
     expected = 42
     assert expected == evaluate(parse("(if (> (* 11 11) 120) (* 7 6) oops)"))
+
+
+def test_evaluate_quote():
+    expected = ["the", "more", "the", "bigger", "the", "better"]
+    assert expected == evaluate(
+        parse("(quote (the more the bigger the better))"),
+    )

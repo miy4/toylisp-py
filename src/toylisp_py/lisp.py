@@ -20,6 +20,7 @@ LPAREN = "("
 RPAREN = ")"
 DEFINE = "define"
 IF_COND = "if"
+QUOTE = "quote"
 
 
 def standard_env() -> Env:
@@ -114,20 +115,24 @@ def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
     """Evaluate an expression in an environment."""
     if isinstance(expr, Symbol):  # variable reference
         return env[expr]
-    if isinstance(expr, Number):
+    if isinstance(expr, Number):  # constant
         return expr
-    if expr[0] == IF_COND:
-        (_, test, conseq, alt) = expr
-        e = conseq if evaluate(test, env) else alt
-        return evaluate(e, env)
-    if expr[0] == DEFINE:
-        (_, symbol, args) = expr
-        env[symbol] = evaluate(args, env)
+
+    op, *args = expr
+    if op == QUOTE:  # quotation
+        return args[0]
+    if op == IF_COND:  # conditional
+        (test, conseq, alt) = args
+        exp = conseq if evaluate(test, env) else alt
+        return evaluate(exp, env)
+    if op == DEFINE:  # definition
+        (symbol, exp) = args
+        env[symbol] = evaluate(exp, env)
         return None
 
-    proc = evaluate(expr[0], env)  # procedure call
-    args = [evaluate(arg, env) for arg in expr[1:]]
-    return proc(*args)
+    proc = evaluate(op, env)  # procedure call
+    vals = [evaluate(arg, env) for arg in args]
+    return proc(*vals)
 
 
 def schemestr(expr: Exp) -> str:
