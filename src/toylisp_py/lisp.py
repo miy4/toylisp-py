@@ -13,14 +13,31 @@ Atom = (Symbol, Number)
 List = list
 """A Scheme expression is an Atom or List."""
 Exp = (Atom, List)
-"""A Scheme environment is a mapping of {variable: value}."""
-Env = dict
 
 LPAREN = "("
 RPAREN = ")"
 DEFINE = "define"
 IF_COND = "if"
 QUOTE = "quote"
+SET_BANG = "set!"
+
+
+class Env(dict):
+    """A Scheme environment is a mapping of {variable: value}."""
+
+    def __init__(
+        self,
+        parms: tuple[str] = (),
+        args: tuple[Exp] = (),
+        outer: Env | None = None,
+    ) -> None:
+        """Initialize the Env object."""
+        self.update(zip(parms, args))
+        self.outer = outer
+
+    def find(self, var: str) -> Env:
+        """Find the innermost Env where var appears."""
+        return self if var in self else self.outer.find(var)
 
 
 def standard_env() -> Env:
@@ -114,7 +131,7 @@ def parse(program: str) -> Exp:
 def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
     """Evaluate an expression in an environment."""
     if isinstance(expr, Symbol):  # variable reference
-        return env[expr]
+        return env.find(expr)[expr]
     if isinstance(expr, Number):  # constant
         return expr
 
@@ -128,6 +145,10 @@ def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
     if op == DEFINE:  # definition
         (symbol, exp) = args
         env[symbol] = evaluate(exp, env)
+        return None
+    if op == SET_BANG:
+        symbol, exp = args
+        env.find(symbol)[symbol] = evaluate(exp, env)
         return None
 
     proc = evaluate(op, env)  # procedure call

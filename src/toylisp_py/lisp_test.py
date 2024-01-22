@@ -2,6 +2,7 @@ from .lisp import (
     evaluate,
     global_env,
     parse,
+    standard_env,
     tokenize,
 )
 
@@ -55,3 +56,12 @@ def test_evaluate_quote():
     assert expected == evaluate(
         parse("(quote (the more the bigger the better))"),
     )
+
+
+def test_evaluate_assignment():
+    env = standard_env()
+    evaluate(parse("(define a 10)"), env)
+    evaluate(parse("(set! a 2)"), env)
+
+    expected = 2
+    assert expected == env["a"]
