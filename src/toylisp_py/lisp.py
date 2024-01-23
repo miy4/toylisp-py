@@ -20,6 +20,7 @@ DEFINE = "define"
 IF_COND = "if"
 QUOTE = "quote"
 SET_BANG = "set!"
+LAMBDA = "lambda"
 
 
 class Env(dict):
@@ -38,6 +39,20 @@ class Env(dict):
     def find(self, var: str) -> Env:
         """Find the innermost Env where var appears."""
         return self if var in self else self.outer.find(var)
+
+
+class Procedure:
+    """A user-defined Scheme procedure."""
+
+    def __init__(self, parms: tuple[str], body: Exp, env: Env) -> None:
+        """Initialize the Procedure object."""
+        self.parms = parms
+        self.body = body
+        self.env = env
+
+    def __call__(self, *args) -> Exp | None:
+        """Invoke the procedure with the given arguments."""
+        return evaluate(self.body, Env(self.parms, args, self.env))
 
 
 def standard_env() -> Env:
@@ -146,10 +161,13 @@ def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
         (symbol, exp) = args
         env[symbol] = evaluate(exp, env)
         return None
-    if op == SET_BANG:
+    if op == SET_BANG:  # assignment
         symbol, exp = args
         env.find(symbol)[symbol] = evaluate(exp, env)
         return None
+    if op == LAMBDA:  # procedure
+        parms, body = args
+        return Procedure(parms, body, env)
 
     proc = evaluate(op, env)  # procedure call
     vals = [evaluate(arg, env) for arg in args]
