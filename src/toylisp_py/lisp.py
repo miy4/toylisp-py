@@ -13,13 +13,46 @@ Atom = (Symbol, Number)
 List = list
 """A Scheme expression is an Atom or List."""
 Exp = (Atom, List)
-"""A Scheme environment is a mapping of {variable: value}."""
-Env = dict
 
 LPAREN = "("
 RPAREN = ")"
 DEFINE = "define"
 IF_COND = "if"
+QUOTE = "quote"
+SET_BANG = "set!"
+LAMBDA = "lambda"
+
+
+class Env(dict):
+    """A Scheme environment is a mapping of {variable: value}."""
+
+    def __init__(
+        self,
+        parms: tuple[str] = (),
+        args: tuple[Exp] = (),
+        outer: Env | None = None,
+    ) -> None:
+        """Initialize the Env object."""
+        self.update(zip(parms, args))
+        self.outer = outer
+
+    def find(self, var: str) -> Env:
+        """Find the innermost Env where var appears."""
+        return self if var in self else self.outer.find(var)
+
+
+class Procedure:
+    """A user-defined Scheme procedure."""
+
+    def __init__(self, parms: tuple[str], body: Exp, env: Env) -> None:
+        """Initialize the Procedure object."""
+        self.parms = parms
+        self.body = body
+        self.env = env
+
+    def __call__(self, *args) -> Exp | None:
+        """Invoke the procedure with the given arguments."""
+        return evaluate(self.body, Env(self.parms, args, self.env))
 
 
 def standard_env() -> Env:
@@ -113,21 +146,32 @@ def parse(program: str) -> Exp:
 def evaluate(expr: Exp, env: Env = global_env) -> Exp | None:
     """Evaluate an expression in an environment."""
     if isinstance(expr, Symbol):  # variable reference
-        return env[expr]
-    if isinstance(expr, Number):
+        return env.find(expr)[expr]
+    if isinstance(expr, Number):  # constant
         return expr
-    if expr[0] == IF_COND:
-        (_, test, conseq, alt) = expr
-        e = conseq if evaluate(test, env) else alt
-        return evaluate(e, env)
-    if expr[0] == DEFINE:
-        (_, symbol, args) = expr
-        env[symbol] = evaluate(args, env)
-        return None
 
-    proc = evaluate(expr[0], env)  # procedure call
-    args = [evaluate(arg, env) for arg in expr[1:]]
-    return proc(*args)
+    op, *args = expr
+    if op == QUOTE:  # quotation
+        return args[0]
+    if op == IF_COND:  # conditional
+        (test, conseq, alt) = args
+        exp = conseq if evaluate(test, env) else alt
+        return evaluate(exp, env)
+    if op == DEFINE:  # definition
+        (symbol, exp) = args
+        env[symbol] = evaluate(exp, env)
+        return None
+    if op == SET_BANG:  # assignment
+        symbol, exp = args
+        env.find(symbol)[symbol] = evaluate(exp, env)
+        return None
+    if op == LAMBDA:  # procedure
+        parms, body = args
+        return Procedure(parms, body, env)
+
+    proc = evaluate(op, env)  # procedure call
+    vals = [evaluate(arg, env) for arg in args]
+    return proc(*vals)
 
 
 def schemestr(expr: Exp) -> str:
